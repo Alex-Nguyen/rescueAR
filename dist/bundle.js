@@ -59316,7 +59316,10 @@ const camera = new __WEBPACK_IMPORTED_MODULE_0_three__["PerspectiveCamera"](
   0.1,
   1000
 );
-const renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["WebGLRenderer"]({ alpha: true, antialias: true });
+const renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["WebGLRenderer"]({
+  alpha: true,
+  antialias: true
+});
 renderer.setSize(VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
 const controls = new __WEBPACK_IMPORTED_MODULE_1_three_orbitcontrols___default.a(camera, renderer.domElement);
 
@@ -59327,7 +59330,9 @@ const planeGeometry = new __WEBPACK_IMPORTED_MODULE_0_three__["PlaneGeometry"](1
 let planeTexture = new __WEBPACK_IMPORTED_MODULE_0_three__["TextureLoader"]().load(
   __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__Maptexture__["a" /* default */])(center_LON, center_LAT, __WEBPACK_IMPORTED_MODULE_3__utils__["c" /* config */].zoom)
 );
-const planeMat = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({ map: planeTexture });
+const planeMat = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({
+  map: planeTexture
+});
 const planeMesh = new __WEBPACK_IMPORTED_MODULE_0_three__["Mesh"](planeGeometry, planeMat);
 scene.add(planeMesh);
 
@@ -59349,12 +59354,36 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
     nodes: [].map.call(way.querySelectorAll("nd"), ref => ({
       ref: nodeRef.find(obj => obj.id == ref.getAttribute("ref"))
     })),
-    type: [].map.call(way.querySelectorAll("tag"), tag => tag.getAttribute("k"))
+    type: [].map.call(way.querySelectorAll("tag"), tag => tag.getAttribute("k")),
+    isBuilding: (function () {
+      let _isBuilding = false;
+      way.querySelectorAll("tag").forEach(tag => {
+        let key = tag.getAttribute("k");
+        if (key == "building") {
+          _isBuilding = tag.getAttribute("v") == "yes";
+        }
+      });
+      return _isBuilding;
+    })(),
+    height: (function () {
+      let _height = 5;
+      way.querySelectorAll("tag").forEach(tag => {
+        let key = tag.getAttribute("k");
+        if (key == "building:levels") {
+          _height = 5 * tag.getAttribute("v");
+        } else if (key == "building:height") {
+          _height = tag.getAttribute("v");
+        }
+      });
+      return _height;
+    })()
   }));
 
   //Building list
-  let buildings = ways.filter(way => way.type.includes("building"));
+  let buildings = ways.filter(way => way.isBuilding);
   let highways = ways.filter(way => way.type.includes("highway"));
+  console.log(buildings);
+  console.log(ways);
   //Add building
   for (let building of buildings) {
     let shape = new __WEBPACK_IMPORTED_MODULE_0_three__["Shape"]();
@@ -59363,7 +59392,14 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
       let y = cy - __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__utils__["b" /* mercatorY */])(node.ref.lat);
       index == 0 ? shape.moveTo(x, y) : shape.lineTo(x, y);
     }
-    let shapeGeo = new __WEBPACK_IMPORTED_MODULE_0_three__["ExtrudeBufferGeometry"](shape, extrudeSettings);
+    let shapeGeo = new __WEBPACK_IMPORTED_MODULE_0_three__["ExtrudeBufferGeometry"](shape, {
+      steps: 2,
+      depth: building.height,
+      bevelEnabled: true,
+      bevelThickness: 1,
+      bevelSize: 1,
+      bevelSegments: 1
+    });
     let shapeMat = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({
       color: "#993333",
       opacity: 0.6,
@@ -59383,7 +59419,9 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
     }
     const line = new __WEBPACK_IMPORTED_MODULE_0_three__["Line"](
       lineGeo,
-      new __WEBPACK_IMPORTED_MODULE_0_three__["LineBasicMaterial"]({ color: 0x0000ff })
+      new __WEBPACK_IMPORTED_MODULE_0_three__["LineBasicMaterial"]({
+        color: 0x0000ff
+      })
     );
     scene.add(line);
   }
@@ -59400,7 +59438,9 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
     var startX = result[0].y * __WEBPACK_IMPORTED_MODULE_3__utils__["c" /* config */].grid.cellSize - __WEBPACK_IMPORTED_MODULE_3__utils__["c" /* config */].grid.centerX;
     var startY = __WEBPACK_IMPORTED_MODULE_3__utils__["c" /* config */].grid.centerY - result[0].x * __WEBPACK_IMPORTED_MODULE_3__utils__["c" /* config */].grid.cellSize;
     let AgentGeo = new __WEBPACK_IMPORTED_MODULE_0_three__["SphereGeometry"](5, 32, 32);
-    let AgentMat = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({ color: 0xffff00 });
+    let AgentMat = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({
+      color: 0xffff00
+    });
     var AgentMesh = new __WEBPACK_IMPORTED_MODULE_0_three__["Mesh"](AgentGeo, AgentMat);
     AgentMesh.position.set(startX, startY, 2.5);
     scene.add(AgentMesh);
@@ -59411,6 +59451,7 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
   var nextX, nextY;
 
   animate();
+
   function animate() {
     requestAnimationFrame(animate);
     controls.update();
@@ -59427,7 +59468,7 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
       let deltaYCRT = (nextY - startY) / distanceCRT;
       let currentdist = Math.sqrt(
         Math.pow(nextX - AgentMesh.position.x, 2) +
-          Math.pow(nextY - AgentMesh.position.y, 2)
+        Math.pow(nextY - AgentMesh.position.y, 2)
       );
       if (currentdist < 0.5) {
         startX = nextX;
@@ -59441,6 +59482,7 @@ __WEBPACK_IMPORTED_MODULE_4_d3__["xml"]("./dist/bigarea.xml", (error, data) => {
   }
 });
 document.addEventListener("click", onDocumentMouseDown, false);
+
 function onDocumentMouseDown(event) {
   event.preventDefault();
   let raycaster = new __WEBPACK_IMPORTED_MODULE_0_three__["Raycaster"]();
@@ -59451,18 +59493,18 @@ function onDocumentMouseDown(event) {
   let intersects = raycaster.intersectObjects(OBJECTS_INTERSECTS);
   if (intersects.length > 0) {
     let geometry = new __WEBPACK_IMPORTED_MODULE_0_three__["SphereGeometry"](5, 32, 32);
-    let material = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({ color: 0xffff00 });
+    let material = new __WEBPACK_IMPORTED_MODULE_0_three__["MeshBasicMaterial"]({
+      color: 0xffff00
+    });
     let sphere = new __WEBPACK_IMPORTED_MODULE_0_three__["Mesh"](geometry, material);
     sphere.position.set(
       intersects[0].point.x,
       intersects[0].point.y,
       intersects[0].point.z
     );
-    console.log(intersects[0]);
     scene.add(sphere);
   }
 }
-
 
 /***/ })
 /******/ ]);
